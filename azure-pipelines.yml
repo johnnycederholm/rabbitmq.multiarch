@@ -1,0 +1,26 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-20.04'
+
+variables:
+  DOCKER_CLI_EXPERIMENTAL: enabled
+
+jobs:
+  - job:
+    displayName: Create Docker image
+    steps:
+      - task: Docker@2
+        displayName: Docker Hub login
+        inputs:
+          containerRegistry: 'Docker Hub'
+          command: 'login'
+      - script: |
+          docker run --privileged --rm tonistiigi/binfmt --install all
+          docker buildx create --name builder --use
+          docker buildx inspect builder --bootstrap
+          docker buildx build --platform linux/arm/v7 \
+            -t johnnyhansson/rabbitmq:3.8.16-management-mqtt \
+          --push \
+          .
+        displayName: Build and push multiarch Docker image
